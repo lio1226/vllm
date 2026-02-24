@@ -862,13 +862,13 @@ class ArcticLSTMSpeculator(nn.Module, SpeculatorTPInit):
                     "next_tokens"][i][:padded_size]
 
             if g is None:
-                device = torch.npu.current_device()
+                device = torch.cuda.current_device()
                 for i in range(num_predict_tokens):
                     self.static_cuda_buffers["next_tokens"][i][:padded_size] = torch.zeros(
                         (padded_size, 1), dtype=torch.long, device=device)
                 with graph_capture(device=device) as capture_context:
-                    g = torch.npu.CUDAGraph()
-                    with torch.npu.graph(g, stream=capture_context.stream):
+                    g = torch.cuda.CUDAGraph()
+                    with torch.cuda.graph(g, stream=capture_context.stream):
                         if self.method == "sum_lstm":
                             self.generate_token_ids(
                                 padded_size,

@@ -147,6 +147,7 @@ from vllm.v1.spec_decode.medusa import MedusaProposer
 from vllm.v1.spec_decode.metadata import SpecDecodeMetadata
 from vllm.v1.spec_decode.ngram_proposer import NgramProposer
 from vllm.v1.spec_decode.suffix_decoding import SuffixDecodingProposer
+from vllm.v1.spec_decode.arctic import ArcticProposer
 from vllm.v1.structured_output.utils import apply_grammar_bitmask
 from vllm.v1.utils import CpuGpuBuffer, record_function_or_nullcontext
 from vllm.v1.worker.cp_utils import check_attention_cp_compatibility
@@ -382,12 +383,14 @@ class GPUModelRunner(
         # layers in the draft model.
         if self.speculative_config and get_pp_group().is_last_rank:
             self.drafter: (
-                NgramProposer | SuffixDecodingProposer | EagleProposer | MedusaProposer
+                NgramProposer | SuffixDecodingProposer | EagleProposer | MedusaProposer | ArcticProposer
             )
             if self.speculative_config.method == "ngram":
                 self.drafter = NgramProposer(self.vllm_config)
             elif self.speculative_config.method == "suffix":
                 self.drafter = SuffixDecodingProposer(self.vllm_config)
+            elif self.speculative_config.method == "arctic":
+                self.drafter = ArcticProposer(self.vllm_config)
             elif self.speculative_config.use_eagle():
                 self.drafter = EagleProposer(self.vllm_config, self.device, self)
                 if self.speculative_config.method == "eagle3":

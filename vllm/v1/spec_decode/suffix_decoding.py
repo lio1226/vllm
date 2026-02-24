@@ -20,7 +20,7 @@ class SuffixDecodingProposer:
         self.max_model_len = vllm_config.model_config.max_model_len
 
         # Lazy import to avoid error when Suffix Decoding is not used.
-        from arctic_inference.suffix_decoding import SuffixDecodingCache
+        from arctic_inference.suffix_decoding import SuffixDecodingCache, SuffixDecodingDraft
 
         # Initialize and empty cache. This object will take care of caching request
         # outputs, evicting old requests, and manages the per-prompt suffix trees.
@@ -39,11 +39,13 @@ class SuffixDecodingProposer:
         will speculate a dynamic number of tokens for each request every decoding step,
         so each entry in the returned list may have different lengths.
         """
+        results = []
         draft_token_ids: list[list[int]] = []
         for i, sampled_ids in enumerate(sampled_token_ids):
             if not sampled_ids:
                 # Skip speculative decoding for partial prefills.
                 draft_token_ids.append([])
+                results.append(SuffixDecodingDraft())
                 continue
 
             # Skip requests that require sampling parameters that are not
@@ -51,12 +53,14 @@ class SuffixDecodingProposer:
             req_id = input_batch.req_ids[i]
             if req_id in input_batch.spec_decode_unsupported_reqs:
                 draft_token_ids.append([])
+                results.append(SuffixDecodingDraft())
                 continue
 
             num_tokens = input_batch.num_tokens_no_spec[i]
             if num_tokens >= self.max_model_len:
                 # Skip requests that have already reached the max model length.
                 draft_token_ids.append([])
+                results.append(SuffixDecodingDraft())
                 continue
 
             index = input_batch.req_id_to_index[req_id]
@@ -86,6 +90,7 @@ class SuffixDecodingProposer:
                 min_token_prob=self.min_token_prob,
             )
 
+            results.append(draft)
             draft_token_ids.append(draft.token_ids)
 
         # Stop requests that were not seen in the input batch.
@@ -94,7 +99,7 @@ class SuffixDecodingProposer:
         ):
             self.suffix_cache.stop_request(req_id)
 
-        return draft_token_ids
+        return draft_token_ids, results
 
     def load_model(self, *args, **kwargs):
         # No model to load.

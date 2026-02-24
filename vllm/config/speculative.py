@@ -45,6 +45,7 @@ SpeculativeMethod = Literal[
     "mlp_speculator",
     "draft_model",
     "suffix",
+    "arctic",
     EagleModelTypes,
 ]
 
@@ -145,6 +146,8 @@ class SpeculativeConfig:
     """The minimum token probability for suffix decoding. Will only speculate
     tokens with estimated probability (based on frequency counts) greater than
     or equal to this value."""
+    enable_suffix_decoding: bool = False
+    """默认为false，当使用ArcticLstm+suffix时启用"""
 
     def compute_hash(self) -> str:
         """
@@ -351,6 +354,8 @@ class SpeculativeConfig:
                     self.method = "eagle"
                 elif "eagle3" in self.draft_model_config.model.lower():
                     self.method = "eagle3"
+                elif "arctic" in self.draft_model_config.model.lower():
+                    self.method = "arctic"
                 elif self.draft_model_config.hf_config.model_type == "medusa":
                     self.method = "medusa"
                 elif self.draft_model_config.hf_config.model_type == "mlp_speculator":

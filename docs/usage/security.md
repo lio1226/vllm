@@ -212,6 +212,7 @@ The following endpoints **do not require authentication** even when `--api-key` 
 - `/tokenize` - Tokenize text (not disabled by `VLLM_ENABLE_SCALE_OUT_ENDPOINTS`)
 - `/detokenize` - Detokenize tokens
 - `/health` - Health check
+- `/ready` - GPU execution and EngineCore forward-progress check
 - `/ping` - SageMaker health check
 - `/version` - Version information
 - `/load` - Server load metrics
